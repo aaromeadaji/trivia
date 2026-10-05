@@ -7,6 +7,7 @@ const firebaseConfig = {
   appId: "1:96735171511:web:1f4675fd31f584bda24e32"
 };
 
+
 let db;
 let adminUnsubscribe = null;
 let leaderboardUnsubscribe = null;
