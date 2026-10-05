@@ -38,18 +38,14 @@ function saveQuestions() {
 }
 
 function switchScreen(screenId) {
-  // Strip active class and aggressively enforce display: none inline
+  // Strip active class from all screens
   document.querySelectorAll('.screen').forEach(s => {
     s.classList.remove('active');
-    s.style.display = 'none';
   });
   
-  // Apply active class and inline display block to requested screen
+  // Apply active class to requested screen
   const target = document.getElementById(screenId);
-  if(target) {
-    target.classList.add('active');
-    target.style.display = 'block';
-  }
+  if(target) target.classList.add('active');
 }
 
 // --- ADMIN PANEL FUNCTIONS ---
@@ -181,7 +177,7 @@ function fetchAdminResults() {
   if(!tbody) return;
   tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading live results...</td></tr>';
   
-  if (adminUnsubscribe) adminUnsubscribe(); 
+  if (adminUnsubscribe) adminUnsubscribe(); // Stop prior listeners
   
   adminUnsubscribe = db.collection('scores').onSnapshot((snapshot) => {
     let results = [];
