@@ -38,14 +38,18 @@ function saveQuestions() {
 }
 
 function switchScreen(screenId) {
-  // Strip active class from all screens securely
+  // Strip active class and aggressively enforce display: none inline
   document.querySelectorAll('.screen').forEach(s => {
     s.classList.remove('active');
+    s.style.display = 'none';
   });
   
-  // Apply active class to requested screen
+  // Apply active class and inline display block to requested screen
   const target = document.getElementById(screenId);
-  if(target) target.classList.add('active');
+  if(target) {
+    target.classList.add('active');
+    target.style.display = 'block';
+  }
 }
 
 // --- ADMIN PANEL FUNCTIONS ---
@@ -172,13 +176,12 @@ window.resetDefaults = function() {
 
 // --- REALTIME LIVE RESULTS (Admin & Front-End) ---
 
-// 1. Live Admin Panel
 function fetchAdminResults() {
   const tbody = document.getElementById('admin-results-body');
   if(!tbody) return;
   tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading live results...</td></tr>';
   
-  if (adminUnsubscribe) adminUnsubscribe(); // Stop prior listeners
+  if (adminUnsubscribe) adminUnsubscribe(); 
   
   adminUnsubscribe = db.collection('scores').onSnapshot((snapshot) => {
     let results = [];
@@ -216,7 +219,6 @@ function fetchAdminResults() {
   });
 }
 
-// 2. Live Front-facing Leaderboard
 function initRealtimeLeaderboard() {
   if (leaderboardUnsubscribe) leaderboardUnsubscribe();
   
