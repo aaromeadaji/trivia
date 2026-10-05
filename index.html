@@ -101,4 +101,71 @@
 
   <script src="app.js"></script>
 </body>
+</html>      <div class="quiz-header">
+        <span id="question-tracker">Question 1</span>
+        <span id="score-tracker">Score: 0</span>
+      </div>
+      <div id="question-text" class="question-box"></div>
+      <div id="options-container" class="options-grid"></div>
+    </div>
+
+    <!-- Screen 3: Results -->
+    <div id="screen-results" class="screen">
+      <h2>Game Over!</h2>
+      <p class="subtitle" id="final-score-text"></p>
+      <h3>Top 5 Leaderboard</h3>
+      <table>
+        <thead><tr><th>Rank</th><th>Player</th><th>Score</th></tr></thead>
+        <tbody id="leaderboard-body"></tbody>
+      </table>
+      <button class="btn btn-secondary" onclick="location.reload()">Play Again</button>
+    </div>
+
+    <!-- Screen 4: Admin Panel -->
+    <div id="screen-admin" class="screen">
+      <h2>Admin Dashboard</h2>
+      <p class="subtitle">Manage questions and view participant results.</p>
+      
+      <!-- Questions Section -->
+      <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 24px;">
+        <h3 style="margin-bottom: 16px; text-align: left;">✏️ Question Management</h3>
+        <div class="admin-form" style="padding: 0; background: transparent; border: none; margin-bottom: 16px;">
+          <h4 id="form-title" style="text-align: left; margin-bottom: 8px;">Add New Question</h4>
+          <input type="text" id="new-q" placeholder="Type the question here..." required>
+          <input type="text" id="opt-0" placeholder="Option 1" required>
+          <input type="text" id="opt-1" placeholder="Option 2" required>
+          <input type="text" id="opt-2" placeholder="Option 3" required>
+          <input type="text" id="opt-3" placeholder="Option 4" required>
+          <select id="correct-opt">
+            <option value="0">Option 1 is correct</option>
+            <option value="1">Option 2 is correct</option>
+            <option value="2">Option 3 is correct</option>
+            <option value="3">Option 4 is correct</option>
+          </select>
+          <button class="btn" id="save-btn" onclick="saveQuestionForm()">Save Question</button>
+          <button class="btn btn-secondary" id="cancel-btn" style="display:none; margin-top: 0;" onclick="cancelEdit()">Cancel Edit</button>
+        </div>
+
+        <div id="admin-question-list" style="margin-bottom: 12px; max-height: 250px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; background: white;"></div>
+        <button class="btn btn-danger" onclick="resetDefaults()">Reset to Default Questions</button>
+      </div>
+
+      <!-- Results Section -->
+      <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 24px;">
+        <h3 style="margin-bottom: 16px; text-align: left;">🏆 Participant Results</h3>
+        <div style="overflow-x: auto; max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; background: white; margin-bottom: 12px;">
+          <table style="margin-top: 0; margin-bottom: 0;">
+            <thead><tr><th>Rank</th><th>Player</th><th>Score</th><th>Submitted At (Time)</th></tr></thead>
+            <tbody id="admin-results-body"></tbody>
+          </table>
+        </div>
+        <button class="btn btn-danger" onclick="wipeResults()">🚨 Wipe All Results</button>
+      </div>
+      
+      <button class="btn btn-secondary" onclick="switchScreen('screen-login')">← Back to Login</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
 </html>
