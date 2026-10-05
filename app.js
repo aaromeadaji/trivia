@@ -12,6 +12,9 @@ let db;
 if(firebaseConfig.apiKey !== "YOUR_API_KEY") {
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
+    
+    // Automatically start listening for real-time leaderboard updates
+    initRealtimeLeaderboard();
 }
 
 // --- QUESTION MANAGEMENT ---
@@ -32,8 +35,15 @@ function saveQuestions() {
 }
 
 function switchScreen(screenId) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(screenId).classList.add('active');
+  // Hide all screens via CSS display property to enforce layout fixes
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  
+  const target = document.getElementById(screenId);
+  target.classList.add('active');
+  target.style.display = 'block';
 }
 
 // --- ADMIN PANEL FUNCTIONS ---
@@ -42,7 +52,7 @@ window.openAdmin = function() {
   if (pwd === "322abj12254") {
     switchScreen('screen-admin');
     renderAdminList();
-    if(db) fetchAdminResults();
+    if(db) fetchAdminResults(); // Load real-time results table for admin
   } else if (pwd !== null) {
     alert("Incorrect password. Access denied.");
   }
@@ -157,47 +167,53 @@ window.resetDefaults = function() {
   }
 }
 
-// --- FULL RESULTS & WIPING (Admin Only) ---
-async function fetchAdminResults() {
+// --- FULL REALTIME RESULTS & WIPING (Admin Only) ---
+let adminUnsubscribe = null;
+
+function fetchAdminResults() {
   const tbody = document.getElementById('admin-results-body');
   if(!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading live results...</td></tr>';
+  
+  if (adminUnsubscribe) adminUnsubscribe(); // Stop any previous listeners
   
   try {
-    const snapshot = await db.collection('scores').get();
-    let results = [];
-    snapshot.forEach(doc => results.push({ id: doc.id, ...doc.data() }));
+    adminUnsubscribe = db.collection('scores').onSnapshot((snapshot) => {
+      let results = [];
+      snapshot.forEach(doc => results.push({ id: doc.id, ...doc.data() }));
 
-    // Added safety check to prevent crash if old data lacks proper Firestore timestamps
-    results.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      const tA = (a.timestamp && typeof a.timestamp.toMillis === 'function') ? a.timestamp.toMillis() : Date.now();
-      const tB = (b.timestamp && typeof b.timestamp.toMillis === 'function') ? b.timestamp.toMillis() : Date.now();
-      return tA - tB; 
-    });
+      results.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        const tA = (a.timestamp && typeof a.timestamp.toMillis === 'function') ? a.timestamp.toMillis() : Date.now();
+        const tB = (b.timestamp && typeof b.timestamp.toMillis === 'function') ? b.timestamp.toMillis() : Date.now();
+        return tA - tB; 
+      });
 
-    tbody.innerHTML = '';
-    if(results.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No submissions yet.</td></tr>';
-        return;
-    }
+      tbody.innerHTML = '';
+      if(results.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No submissions yet.</td></tr>';
+          return;
+      }
 
-    results.forEach((data, index) => {
-      const rank = index + 1;
-      const dateObj = (data.timestamp && typeof data.timestamp.toDate === 'function') ? data.timestamp.toDate() : new Date();
-      const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      const dateString = dateObj.toLocaleDateString();
+      results.forEach((data, index) => {
+        const rank = index + 1;
+        const dateObj = (data.timestamp && typeof data.timestamp.toDate === 'function') ? data.timestamp.toDate() : new Date();
+        const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const dateString = dateObj.toLocaleDateString();
 
-      tbody.innerHTML += `<tr>
-        <td><strong>#${rank}</strong></td>
-        <td>${data.name}<br><small style="color:var(--text-muted);">${data.email}</small></td>
-        <td>${data.score}</td>
-        <td>${timeString}<br><small style="color:var(--text-muted);">${dateString}</small></td>
-      </tr>`;
+        tbody.innerHTML += `<tr>
+          <td><strong>#${rank}</strong></td>
+          <td>${data.name}<br><small style="color:var(--text-muted);">${data.email}</small></td>
+          <td>${data.score}</td>
+          <td>${timeString}<br><small style="color:var(--text-muted);">${dateString}</small></td>
+        </tr>`;
+      });
+    }, (err) => {
+      console.error("Live Fetch Error:", err);
+      tbody.innerHTML = `<tr><td colspan="4" style="color: red;">Error: ${err.message}</td></tr>`;
     });
   } catch(err) {
-    console.error("Fetch Admin Error:", err);
-    tbody.innerHTML = `<tr><td colspan="4" style="color: red;">Error: ${err.message} <br><br>Ensure Firebase is connected and your Firestore rules are set to Test Mode.</td></tr>`;
+    console.error("Initialization Error:", err);
   }
 }
 
@@ -216,7 +232,7 @@ window.wipeResults = async function() {
     });
     await batch.commit();
     alert("All results have been wiped successfully.");
-    fetchAdminResults();
+    // No need to fetchAdminResults() because onSnapshot triggers automatically
   } catch (err) {
     console.error("Error wiping results:", err);
     alert("Error wiping results. " + err.message);
@@ -279,15 +295,11 @@ async function finishGame() {
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
   } catch (err) { console.error("Score save error", err); }
-
-  fetchLeaderboard();
 }
 
-async function fetchLeaderboard() {
-  const body = document.getElementById('leaderboard-body');
-  body.innerHTML = '';
-  try {
-    const snapshot = await db.collection('scores').get();
+// Front-facing Realtime leaderboard (Top 5 only)
+function initRealtimeLeaderboard() {
+  db.collection('scores').onSnapshot((snapshot) => {
     let results = [];
     snapshot.forEach(doc => results.push(doc.data()));
 
@@ -298,9 +310,15 @@ async function fetchLeaderboard() {
       return tA - tB;
     });
 
-    results.slice(0, 5).forEach((data, index) => {
-      const rank = index + 1;
-      body.innerHTML += `<tr><td>#${rank} ${rank<=3?'🏆':''}</td><td>${data.name}</td><td>${data.score}</td></tr>`;
-    });
-  } catch (err) { console.error("Leaderboard Error:", err); }
+    const body = document.getElementById('leaderboard-body');
+    if(body) {
+      body.innerHTML = '';
+      results.slice(0, 5).forEach((data, index) => {
+        const rank = index + 1;
+        body.innerHTML += `<tr><td>#${rank} ${rank<=3?'🏆':''}</td><td>${data.name}</td><td>${data.score}</td></tr>`;
+      });
+    }
+  }, (err) => {
+     console.error("Live Leaderboard Error:", err);
+  });
 }
