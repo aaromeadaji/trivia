@@ -8,10 +8,9 @@ const firebaseConfig = {
   appId: "1:96735171511:web:1f4675fd31f584bda24e32"
 };
 
-let auth, db;
+let db;
 if(firebaseConfig.apiKey !== "YOUR_API_KEY") {
     firebase.initializeApp(firebaseConfig);
-    auth = firebase.auth();
     db = firebase.firestore();
 }
 
@@ -88,14 +87,16 @@ window.resetDefaults = function() {
 }
 
 // --- GAMEPLAY FUNCTIONS ---
-window.signInWithGoogle = function() {
-  if(!auth) return alert("Please configure Firebase keys in app.js first.");
+window.signIn = function(event) {
+  event.preventDefault(); // Prevent page reload
   
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).then((result) => {
-    currentUser = result.user;
-    startNewGame();
-  }).catch(err => alert("Login failed: " + err.message));
+  if(!db) return alert("Please configure Firebase keys in app.js first.");
+  
+  const name = document.getElementById('player-name').value;
+  const email = document.getElementById('player-email').value;
+
+  currentUser = { displayName: name, email: email };
+  startNewGame();
 }
 
 function startNewGame() {
@@ -139,6 +140,7 @@ async function finishGame() {
   try {
     await db.collection('scores').add({
       name: currentUser.displayName,
+      email: currentUser.email,
       score: score,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
