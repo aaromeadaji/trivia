@@ -24,7 +24,7 @@ p.subtitle { text-align: center; color: var(--text-muted); margin-bottom: 24px; 
 .btn-danger { background-color: var(--danger); margin-top: 10px; }
 .btn-danger:hover { background-color: #dc2626; }
 
-/* The logic that hides inactive screens */
+/* Inactive screens hidden */
 .screen { display: none; }
 .screen.active { display: block; }
 
@@ -56,6 +56,6 @@ p.subtitle { text-align: center; color: var(--text-muted); margin-bottom: 24px; 
 .delete-btn { background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
 
 /* Leaderboard Table */
-table { width: 100%; border-collapse: collapse; margin-top: 20px; margin-bottom: 20px; }
+table { width: 100%; border-collapse: collapse; }
 th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
 th { background-color: #f1f5f9; font-weight: 600; position: sticky; top: 0; z-index: 10; }
