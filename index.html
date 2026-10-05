@@ -60,7 +60,7 @@
       <p class="subtitle">Questions are saved securely to this browser.</p>
       
       <div class="admin-form">
-        <h3>Add New Question</h3>
+        <h3 id="form-title">Add New Question</h3>
         <input type="text" id="new-q" placeholder="Type the question here..." required>
         <input type="text" id="opt-0" placeholder="Option 1" required>
         <input type="text" id="opt-1" placeholder="Option 2" required>
@@ -72,7 +72,8 @@
           <option value="2">Option 3 is correct</option>
           <option value="3">Option 4 is correct</option>
         </select>
-        <button class="btn" onclick="addQuestion()">Save Question</button>
+        <button class="btn" id="save-btn" onclick="saveQuestionForm()">Save Question</button>
+        <button class="btn btn-secondary" id="cancel-btn" style="display:none; margin-top: 0;" onclick="cancelEdit()">Cancel Edit</button>
       </div>
 
       <div id="admin-question-list" style="margin-bottom: 20px;"></div>
