@@ -1,3 +1,12 @@
+const firebaseConfig = {
+  apiKey: "AIzaSyAOqC13bplLUJ_8uv09DO6PneaZOoGF-mc",
+  authDomain: "trivia-e6cd8.firebaseapp.com",
+  projectId: "trivia-e6cd8",
+  storageBucket: "trivia-e6cd8.firebasestorage.app",
+  messagingSenderId: "96735171511",
+  appId: "1:96735171511:web:1f4675fd31f584bda24e32"
+};
+
 let db;
 let adminUnsubscribe = null;
 let leaderboardUnsubscribe = null;
