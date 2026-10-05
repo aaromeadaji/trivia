@@ -8,6 +8,7 @@ const firebaseConfig = {
   appId: "1:96735171511:web:1f4675fd31f584bda24e32"
 };
 
+
 let db;
 if(firebaseConfig.apiKey !== "YOUR_API_KEY") {
     firebase.initializeApp(firebaseConfig);
@@ -16,8 +17,8 @@ if(firebaseConfig.apiKey !== "YOUR_API_KEY") {
 
 // --- QUESTION MANAGEMENT ---
 const defaultQuestions = [
-  { question: "In what year was our company officially founded?", options: ["2015", "2018", "2020", "2022"], answer: 1 },
-  { question: "Which core value emphasizes client success?", options: ["Innovation", "Customer First", "Transparency", "Agility"], answer: 1 }
+  { question: "In what year was CJID officially founded?", options: ["2014", "2015", "2018", "2020"], answer: 0 },
+  { question: "Which of these is NOT a core program area of CJID?", options: ["Media Development", "Agricultural Policy", "Accountability", "Elections"], answer: 1 }
 ];
 
 let questions = JSON.parse(localStorage.getItem('trivia_questions')) || defaultQuestions;
@@ -37,8 +38,13 @@ function switchScreen(screenId) {
 
 // --- ADMIN PANEL FUNCTIONS ---
 window.openAdmin = function() {
-  switchScreen('screen-admin');
-  renderAdminList();
+  const pwd = prompt("Enter Admin Password:");
+  if (pwd === "322abj12254") {
+    switchScreen('screen-admin');
+    renderAdminList();
+  } else if (pwd !== null) {
+    alert("Incorrect password. Access denied.");
+  }
 }
 
 function renderAdminList() {
