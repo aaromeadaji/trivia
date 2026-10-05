@@ -1,11 +1,11 @@
-# Workplace Trivia Challenge 🏆
+# CJID October General Meeting Quiz 🚂
 
-A fast-paced, interactive trivia game built for organizational team-building. Features a live leaderboard, email-agnostic entry, and a built-in admin panel to manage questions.
+A fast-paced, interactive trivia game built for the CJID October General Meeting. Features a live leaderboard, email-agnostic entry, and a password-protected admin panel to manage questions.
 
 ## Features
 - **Open Entry System:** Players simply enter their Name and Email to play. No strict passwords or Google/SSO required.
 - **Global Leaderboard:** Real-time top 5 score tracking using Firestore.
-- **Admin Panel:** Add, delete, or reset custom questions directly from the UI.
+- **Secured Admin Panel:** Add, delete, or reset custom questions directly from the UI (Password protected).
 - **Vanilla Tech Stack:** Zero dependencies, lightweight HTML/CSS/JS.
 
 ## Setup Instructions
