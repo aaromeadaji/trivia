@@ -25,6 +25,7 @@ let questions = JSON.parse(localStorage.getItem('trivia_questions')) || defaultQ
 let currentQuestionIndex = 0;
 let score = 0;
 let currentUser = null;
+let editingIndex = -1; // Tracks if the admin is editing a question
 
 function saveQuestions() {
   localStorage.setItem('trivia_questions', JSON.stringify(questions));
@@ -54,14 +55,53 @@ function renderAdminList() {
     const item = document.createElement('div');
     item.className = 'q-list-item';
     item.innerHTML = `
-      <span><strong>Q${index + 1}:</strong> ${q.question}</span>
-      <button class="delete-btn" onclick="deleteQuestion(${index})">Delete</button>
+      <span style="flex-grow: 1; margin-right: 15px;"><strong>Q${index + 1}:</strong> ${q.question}</span>
+      <div class="action-buttons">
+        <button class="edit-btn" onclick="editQuestion(${index})">Edit</button>
+        <button class="delete-btn" onclick="deleteQuestion(${index})">Delete</button>
+      </div>
     `;
     list.appendChild(item);
   });
 }
 
-window.addQuestion = function() {
+window.editQuestion = function(index) {
+  editingIndex = index;
+  const q = questions[index];
+  
+  // Populate the form with the selected question's details
+  document.getElementById('new-q').value = q.question;
+  document.getElementById('opt-0').value = q.options[0];
+  document.getElementById('opt-1').value = q.options[1];
+  document.getElementById('opt-2').value = q.options[2];
+  document.getElementById('opt-3').value = q.options[3];
+  document.getElementById('correct-opt').value = q.answer;
+  
+  // Update UI to reflect editing mode
+  document.getElementById('form-title').textContent = `Edit Question ${index + 1}`;
+  document.getElementById('save-btn').textContent = "Update Question";
+  document.getElementById('cancel-btn').style.display = "inline-flex";
+  
+  // Scroll to the form
+  document.querySelector('.admin-form').scrollIntoView({behavior: 'smooth'});
+}
+
+window.cancelEdit = function() {
+  editingIndex = -1;
+  document.getElementById('form-title').textContent = "Add New Question";
+  document.getElementById('save-btn').textContent = "Save Question";
+  document.getElementById('cancel-btn').style.display = "none";
+  
+  // Clear the form
+  document.getElementById('new-q').value = '';
+  document.getElementById('opt-0').value = '';
+  document.getElementById('opt-1').value = '';
+  document.getElementById('opt-2').value = '';
+  document.getElementById('opt-3').value = '';
+  document.getElementById('correct-opt').value = 0;
+}
+
+window.saveQuestionForm = function() {
   const qText = document.getElementById('new-q').value;
   const opts = [
     document.getElementById('opt-0').value,
@@ -73,22 +113,33 @@ window.addQuestion = function() {
 
   if (!qText || opts.includes('')) return alert('Please fill all fields');
 
-  questions.push({ question: qText, options: opts, answer: ans });
-  saveQuestions();
+  if (editingIndex === -1) {
+    // Adding a new question
+    questions.push({ question: qText, options: opts, answer: ans });
+  } else {
+    // Updating an existing question
+    questions[editingIndex] = { question: qText, options: opts, answer: ans };
+  }
   
-  document.getElementById('new-q').value = '';
-  opts.forEach((_, i) => document.getElementById(`opt-${i}`).value = '');
+  saveQuestions();
+  cancelEdit(); // Reset the form back to 'Add' mode
 }
 
 window.deleteQuestion = function(index) {
-  questions.splice(index, 1);
-  saveQuestions();
+  if (confirm("Are you sure you want to delete this question?")) {
+    questions.splice(index, 1);
+    saveQuestions();
+    
+    // If they delete the question they were currently editing, reset the form
+    if (editingIndex === index) cancelEdit();
+  }
 }
 
 window.resetDefaults = function() {
   if(confirm("Delete all custom questions and restore defaults?")) {
     questions = [...defaultQuestions];
     saveQuestions();
+    cancelEdit();
   }
 }
 
