@@ -2,6 +2,11 @@
 
 A fast-paced, interactive trivia game built for the CJID October General Meeting. Features a live leaderboard, email-agnostic entry, and a password-protected admin panel.
 
-## Critical Troubleshooting
-**I have duplicate text or overlapping screens!**
-If you extract these files into a folder that already contains older versions of the files, your computer or code editor might duplicate HTML blocks. Please **delete all old files completely**, and extract this zip into an empty folder.
+## Critical Setup Fixes
+
+**If you see duplicate text outside the white box on the screen:**
+This happens because your local `index.html` file has merged multiple versions of the code together. 
+1. **DELETE** your current folder entirely.
+2. Extract this fresh ZIP file into a completely new, empty folder.
+3. Open `app.js` and paste your Firebase keys back in. 
+4. The issue will be completely resolved.
