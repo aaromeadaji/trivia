@@ -38,11 +38,9 @@ function saveQuestions() {
 }
 
 function switchScreen(screenId) {
-  // Strip active class from all screens
   document.querySelectorAll('.screen').forEach(s => {
     s.classList.remove('active');
   });
-  // Apply active class to requested screen
   const target = document.getElementById(screenId);
   if(target) target.classList.add('active');
 }
@@ -110,7 +108,7 @@ window.editQuestion = function(index) {
   document.getElementById('opt-1').value = q.options[1];
   document.getElementById('opt-2').value = q.options[2];
   document.getElementById('opt-3').value = q.options[3];
-  document.getElementById('correct-opt').value = parseInt(q.answer);
+  document.getElementById('correct-opt').value = parseInt(q.answer, 10);
   
   document.getElementById('form-title').textContent = `Edit Question ${index + 1}`;
   document.getElementById('save-btn').textContent = "Update Question";
@@ -139,7 +137,7 @@ window.saveQuestionForm = function() {
     document.getElementById('opt-2').value,
     document.getElementById('opt-3').value
   ];
-  const ans = parseInt(document.getElementById('correct-opt').value);
+  const ans = parseInt(document.getElementById('correct-opt').value, 10);
 
   if (!qText || opts.includes('')) return alert('Please fill all fields');
 
@@ -169,25 +167,40 @@ window.resetDefaults = function() {
 }
 
 
-// --- REALTIME LIVE RESULTS (Admin & Front-End) ---
+// --- REALTIME LIVE RESULTS & RANKING LOGIC ---
 
+// Helper function to sort records by Score (Desc), then Timestamp (Ascending / Earliest submission first)
+function sortResultsByScoreAndTime(results) {
+  return results.sort((a, b) => {
+    // Primary Sort: Highest Score first
+    if (b.score !== a.score) {
+      return b.score - a.score;
+    }
+    
+    // Secondary Tie-breaker: Timestamp (earliest submission gets higher rank)
+    const tA = (a.timestamp && typeof a.timestamp.toMillis === 'function') ? a.timestamp.toMillis() : (a.localTime || Date.now());
+    const tB = (b.timestamp && typeof b.timestamp.toMillis === 'function') ? b.timestamp.toMillis() : (b.localTime || Date.now());
+    return tA - tB; 
+  });
+}
+
+// 1. Live Admin Panel - Displays ALL Participants
 function fetchAdminResults() {
   const tbody = document.getElementById('admin-results-body');
+  const countSpan = document.getElementById('participant-count');
   if(!tbody) return;
   tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading live results...</td></tr>';
   
-  if (adminUnsubscribe) adminUnsubscribe(); // Stop prior listeners
+  if (adminUnsubscribe) adminUnsubscribe();
   
   adminUnsubscribe = db.collection('scores').onSnapshot((snapshot) => {
     let results = [];
     snapshot.forEach(doc => results.push({ id: doc.id, ...doc.data() }));
 
-    results.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      const tA = (a.timestamp && typeof a.timestamp.toMillis === 'function') ? a.timestamp.toMillis() : Date.now();
-      const tB = (b.timestamp && typeof b.timestamp.toMillis === 'function') ? b.timestamp.toMillis() : Date.now();
-      return tA - tB; 
-    });
+    // Apply Score -> Timestamp sorting rule
+    sortResultsByScoreAndTime(results);
+
+    if(countSpan) countSpan.textContent = results.length;
 
     tbody.innerHTML = '';
     if(results.length === 0) {
@@ -197,7 +210,13 @@ function fetchAdminResults() {
 
     results.forEach((data, index) => {
       const rank = index + 1;
-      const dateObj = (data.timestamp && typeof data.timestamp.toDate === 'function') ? data.timestamp.toDate() : new Date();
+      let dateObj = new Date();
+      if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+        dateObj = data.timestamp.toDate();
+      } else if (data.localTime) {
+        dateObj = new Date(data.localTime);
+      }
+
       const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       const dateString = dateObj.toLocaleDateString();
 
@@ -214,6 +233,7 @@ function fetchAdminResults() {
   });
 }
 
+// 2. Live Player Leaderboard - Displays ALL Participants ranked 1st to last
 function initRealtimeLeaderboard() {
   if (leaderboardUnsubscribe) leaderboardUnsubscribe();
   
@@ -221,12 +241,8 @@ function initRealtimeLeaderboard() {
     let results = [];
     snapshot.forEach(doc => results.push(doc.data()));
 
-    results.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      const tA = (a.timestamp && typeof a.timestamp.toMillis === 'function') ? a.timestamp.toMillis() : Date.now();
-      const tB = (b.timestamp && typeof b.timestamp.toMillis === 'function') ? b.timestamp.toMillis() : Date.now();
-      return tA - tB;
-    });
+    // Apply Score -> Timestamp sorting rule
+    sortResultsByScoreAndTime(results);
 
     const body = document.getElementById('leaderboard-body');
     if(body) {
@@ -236,9 +252,10 @@ function initRealtimeLeaderboard() {
           return;
       }
       
-      results.slice(0, 5).forEach((data, index) => {
+      // Render EVERY participant in the database (no limit)
+      results.forEach((data, index) => {
         const rank = index + 1;
-        body.innerHTML += `<tr><td>#${rank} ${rank<=3?'🏆':''}</td><td>${data.name}</td><td>${data.score}</td></tr>`;
+        body.innerHTML += `<tr><td>#${rank} ${rank <= 3 ? '🏆' : ''}</td><td>${data.name}</td><td>${data.score}</td></tr>`;
       });
     }
   }, (err) => {
@@ -307,10 +324,10 @@ function loadQuestion() {
 function selectOption(selectedIdx) {
   const currentQuestion = questions[currentQuestionIndex];
   
-  // FIX: Explicitly parse both to numbers to guarantee strict equality check
   const selected = parseInt(selectedIdx, 10);
   const correct = parseInt(currentQuestion.answer, 10);
 
+  // Exact scoring check
   if (selected === correct) {
     score += 100;
   }
@@ -328,11 +345,13 @@ async function finishGame() {
   document.getElementById('final-score-text').textContent = `${currentUser.displayName}, your score is ${score}!`;
 
   try {
+    // Record every single participant submission with Firestore server timestamp AND local epoch time fallback
     await db.collection('scores').add({
       name: currentUser.displayName,
       email: currentUser.email,
       score: score,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      localTime: Date.now()
     });
   } catch (err) { console.error("Score save error", err); }
 }
