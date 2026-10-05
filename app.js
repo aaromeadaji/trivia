@@ -32,8 +32,15 @@ function saveQuestions() {
 }
 
 function switchScreen(screenId) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(screenId).classList.add('active');
+  // Hide all screens explicitly
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  // Show the target screen explicitly
+  const target = document.getElementById(screenId);
+  target.classList.add('active');
+  target.style.display = 'block';
 }
 
 // --- ADMIN PANEL FUNCTIONS ---
