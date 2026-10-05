@@ -26,6 +26,11 @@ p.subtitle { text-align: center; color: var(--text-muted); margin-bottom: 24px; 
 .screen { display: none; }
 .screen.active { display: block; }
 
+/* Login Form */
+.login-form { display: grid; gap: 12px; margin-bottom: 20px; }
+.login-form input { padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; width: 100%; }
+.login-form input:focus { outline: none; border-color: var(--primary); }
+
 /* Quiz Styling */
 .quiz-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 14px; color: var(--text-muted); font-weight: 600; }
 .question-box { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
