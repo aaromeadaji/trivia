@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workplace Trivia Challenge</title>
+  <title>CJID October General Meeting Quiz</title>
   
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -17,7 +17,10 @@
   <div class="container">
     <!-- Screen 1: Login -->
     <div id="screen-login" class="screen active">
-      <h1>Workplace Trivia Challenge</h1>
+      <h1>CJID October General Meeting Quiz</h1>
+      <p style="text-align: center; margin-top: -5px; margin-bottom: 20px; font-weight: 600; color: var(--text-muted);">
+        powered by the engine 🚂 room
+      </p>
       <p class="subtitle">Enter your details to play. Top 3 scores win prizes!</p>
       
       <form class="login-form" onsubmit="signIn(event)">
@@ -35,54 +38,6 @@
         <span id="question-tracker">Question 1</span>
         <span id="score-tracker">Score: 0</span>
       </div>
-      <div id="question-text" class="question-box"></div>
-      <div id="options-container" class="options-grid"></div>
-    </div>
-
-    <!-- Screen 3: Results -->
-    <div id="screen-results" class="screen">
-      <h2>Game Over!</h2>
-      <p class="subtitle" id="final-score-text"></p>
-      <h3>Leaderboard</h3>
-      <table>
-        <thead><tr><th>Rank</th><th>Player</th><th>Score</th></tr></thead>
-        <tbody id="leaderboard-body"></tbody>
-      </table>
-      <button class="btn btn-secondary" onclick="location.reload()">Play Again</button>
-    </div>
-
-    <!-- Screen 4: Admin Panel -->
-    <div id="screen-admin" class="screen">
-      <h2>Manage Questions</h2>
-      <p class="subtitle">Questions are saved securely to this browser.</p>
-      
-      <div class="admin-form">
-        <h3>Add New Question</h3>
-        <input type="text" id="new-q" placeholder="Type the question here..." required>
-        <input type="text" id="opt-0" placeholder="Option 1" required>
-        <input type="text" id="opt-1" placeholder="Option 2" required>
-        <input type="text" id="opt-2" placeholder="Option 3" required>
-        <input type="text" id="opt-3" placeholder="Option 4" required>
-        <select id="correct-opt">
-          <option value="0">Option 1 is correct</option>
-          <option value="1">Option 2 is correct</option>
-          <option value="2">Option 3 is correct</option>
-          <option value="3">Option 4 is correct</option>
-        </select>
-        <button class="btn" onclick="addQuestion()">Save Question</button>
-      </div>
-
-      <div id="admin-question-list" style="margin-bottom: 20px;"></div>
-      
-      <button class="btn btn-secondary" onclick="switchScreen('screen-login')">← Back to Login</button>
-      <button class="btn btn-danger" onclick="resetDefaults()">Reset to Default Questions</button>
-    </div>
-  </div>
-
-  <!-- Link to External JavaScript -->
-  <script src="app.js"></script>
-</body>
-</html>      </div>
       <div id="question-text" class="question-box"></div>
       <div id="options-container" class="options-grid"></div>
     </div>
