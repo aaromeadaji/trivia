@@ -32,15 +32,8 @@ function saveQuestions() {
 }
 
 function switchScreen(screenId) {
-  // Hide all screens explicitly
-  document.querySelectorAll('.screen').forEach(s => {
-    s.classList.remove('active');
-    s.style.display = 'none';
-  });
-  // Show the target screen explicitly
-  const target = document.getElementById(screenId);
-  target.classList.add('active');
-  target.style.display = 'block';
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
 }
 
 // --- ADMIN PANEL FUNCTIONS ---
@@ -49,7 +42,7 @@ window.openAdmin = function() {
   if (pwd === "322abj12254") {
     switchScreen('screen-admin');
     renderAdminList();
-    if(db) fetchAdminResults(); // Load full results table for admin
+    if(db) fetchAdminResults();
   } else if (pwd !== null) {
     alert("Incorrect password. Access denied.");
   }
@@ -108,7 +101,7 @@ window.editQuestion = function(index) {
   document.getElementById('opt-3').value = q.options[3];
   document.getElementById('correct-opt').value = q.answer;
   
-  document.getElementById('form-title').textContent = \`Edit Question \${index + 1}\`;
+  document.getElementById('form-title').textContent = `Edit Question ${index + 1}`;
   document.getElementById('save-btn').textContent = "Update Question";
   document.getElementById('cancel-btn').style.display = "inline-flex";
 }
@@ -175,7 +168,6 @@ async function fetchAdminResults() {
     let results = [];
     snapshot.forEach(doc => results.push({ id: doc.id, ...doc.data() }));
 
-    // Sort by Score (Desc), then by Time (Ascending/Fastest submission)
     results.sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
       const tA = a.timestamp ? a.timestamp.toMillis() : Date.now();
@@ -192,16 +184,15 @@ async function fetchAdminResults() {
     results.forEach((data, index) => {
       const rank = index + 1;
       const dateObj = data.timestamp ? data.timestamp.toDate() : new Date();
-      // Record time down to seconds
       const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       const dateString = dateObj.toLocaleDateString();
 
-      tbody.innerHTML += \`<tr>
-        <td><strong>#\${rank}</strong></td>
-        <td>\${data.name}<br><small style="color:var(--text-muted);">\${data.email}</small></td>
-        <td>\${data.score}</td>
-        <td>\${timeString}<br><small style="color:var(--text-muted);">\${dateString}</small></td>
-      </tr>\`;
+      tbody.innerHTML += `<tr>
+        <td><strong>#${rank}</strong></td>
+        <td>${data.name}<br><small style="color:var(--text-muted);">${data.email}</small></td>
+        <td>${data.score}</td>
+        <td>${timeString}<br><small style="color:var(--text-muted);">${dateString}</small></td>
+      </tr>`;
     });
   } catch(err) {
     console.error(err);
@@ -224,7 +215,7 @@ window.wipeResults = async function() {
     });
     await batch.commit();
     alert("All results have been wiped successfully.");
-    fetchAdminResults(); // Refresh table
+    fetchAdminResults();
   } catch (err) {
     console.error("Error wiping results:", err);
     alert("Error wiping results.");
@@ -252,8 +243,8 @@ function startNewGame() {
 
 function loadQuestion() {
   const q = questions[currentQuestionIndex];
-  document.getElementById('question-tracker').textContent = \`Question \${currentQuestionIndex + 1}/\${questions.length}\`;
-  document.getElementById('score-tracker').textContent = \`Score: \${score}\`;
+  document.getElementById('question-tracker').textContent = `Question ${currentQuestionIndex + 1}/${questions.length}`;
+  document.getElementById('score-tracker').textContent = `Score: ${score}`;
   document.getElementById('question-text').textContent = q.question;
 
   const container = document.getElementById('options-container');
@@ -277,7 +268,7 @@ function selectOption(selectedIdx) {
 
 async function finishGame() {
   switchScreen('screen-results');
-  document.getElementById('final-score-text').textContent = \`\${currentUser.displayName}, your score is \${score}!\`;
+  document.getElementById('final-score-text').textContent = `${currentUser.displayName}, your score is ${score}!`;
 
   try {
     await db.collection('scores').add({
@@ -291,12 +282,10 @@ async function finishGame() {
   fetchLeaderboard();
 }
 
-// Front-facing leaderboard (Top 5 only)
 async function fetchLeaderboard() {
   const body = document.getElementById('leaderboard-body');
   body.innerHTML = '';
   try {
-    // Fetch all to sort identically to Admin panel (by score, then time)
     const snapshot = await db.collection('scores').get();
     let results = [];
     snapshot.forEach(doc => results.push(doc.data()));
@@ -310,7 +299,7 @@ async function fetchLeaderboard() {
 
     results.slice(0, 5).forEach((data, index) => {
       const rank = index + 1;
-      body.innerHTML += \`<tr><td>#\${rank} \${rank<=3?'🏆':''}</td><td>\${data.name}</td><td>\${data.score}</td></tr>\`;
+      body.innerHTML += `<tr><td>#${rank} ${rank<=3?'🏆':''}</td><td>${data.name}</td><td>${data.score}</td></tr>`;
     });
   } catch (err) { console.error(err); }
 }
