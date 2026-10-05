@@ -168,10 +168,11 @@ async function fetchAdminResults() {
     let results = [];
     snapshot.forEach(doc => results.push({ id: doc.id, ...doc.data() }));
 
+    // Added safety check to prevent crash if old data lacks proper Firestore timestamps
     results.sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
-      const tA = a.timestamp ? a.timestamp.toMillis() : Date.now();
-      const tB = b.timestamp ? b.timestamp.toMillis() : Date.now();
+      const tA = (a.timestamp && typeof a.timestamp.toMillis === 'function') ? a.timestamp.toMillis() : Date.now();
+      const tB = (b.timestamp && typeof b.timestamp.toMillis === 'function') ? b.timestamp.toMillis() : Date.now();
       return tA - tB; 
     });
 
@@ -183,7 +184,7 @@ async function fetchAdminResults() {
 
     results.forEach((data, index) => {
       const rank = index + 1;
-      const dateObj = data.timestamp ? data.timestamp.toDate() : new Date();
+      const dateObj = (data.timestamp && typeof data.timestamp.toDate === 'function') ? data.timestamp.toDate() : new Date();
       const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       const dateString = dateObj.toLocaleDateString();
 
@@ -195,8 +196,8 @@ async function fetchAdminResults() {
       </tr>`;
     });
   } catch(err) {
-    console.error(err);
-    tbody.innerHTML = '<tr><td colspan="4" style="color: red;">Error loading results. Ensure Firebase is connected.</td></tr>';
+    console.error("Fetch Admin Error:", err);
+    tbody.innerHTML = `<tr><td colspan="4" style="color: red;">Error: ${err.message} <br><br>Ensure Firebase is connected and your Firestore rules are set to Test Mode.</td></tr>`;
   }
 }
 
@@ -218,7 +219,7 @@ window.wipeResults = async function() {
     fetchAdminResults();
   } catch (err) {
     console.error("Error wiping results:", err);
-    alert("Error wiping results.");
+    alert("Error wiping results. " + err.message);
   }
 }
 
@@ -292,8 +293,8 @@ async function fetchLeaderboard() {
 
     results.sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
-      const tA = a.timestamp ? a.timestamp.toMillis() : Date.now();
-      const tB = b.timestamp ? b.timestamp.toMillis() : Date.now();
+      const tA = (a.timestamp && typeof a.timestamp.toMillis === 'function') ? a.timestamp.toMillis() : Date.now();
+      const tB = (b.timestamp && typeof b.timestamp.toMillis === 'function') ? b.timestamp.toMillis() : Date.now();
       return tA - tB;
     });
 
@@ -301,5 +302,5 @@ async function fetchLeaderboard() {
       const rank = index + 1;
       body.innerHTML += `<tr><td>#${rank} ${rank<=3?'🏆':''}</td><td>${data.name}</td><td>${data.score}</td></tr>`;
     });
-  } catch (err) { console.error(err); }
+  } catch (err) { console.error("Leaderboard Error:", err); }
 }
