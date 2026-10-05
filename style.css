@@ -54,24 +54,4 @@ p.subtitle { text-align: center; color: var(--text-muted); margin-bottom: 24px; 
 /* Leaderboard Table */
 table { width: 100%; border-collapse: collapse; margin-top: 20px; margin-bottom: 20px; }
 th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
-th { background-color: #f1f5f9; font-weight: 600; position: sticky; top: 0; z-index: 10; }.option-btn:hover { border-color: var(--primary); background-color: #eff6ff; }
-
-/* Admin Panel Styling */
-.admin-form { display: grid; gap: 10px; margin-bottom: 24px; padding: 16px; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border); }
-.admin-form input, .admin-form select { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; width: 100%; }
-.q-list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
-
-/* Reorder Buttons */
-.reorder-container { display: flex; flex-direction: column; gap: 4px; margin-right: 12px; }
-.move-btn { background: #e2e8f0; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; color: #475569; transition: 0.2s; }
-.move-btn:hover:not(:disabled) { background: #cbd5e1; }
-.move-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-.action-buttons { display: flex; gap: 6px; flex-shrink: 0; }
-.edit-btn { background: var(--warning); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-.delete-btn { background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-
-/* Leaderboard Table */
-table { width: 100%; border-collapse: collapse; margin-top: 20px; margin-bottom: 20px; }
-th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
 th { background-color: #f1f5f9; font-weight: 600; position: sticky; top: 0; z-index: 10; }
