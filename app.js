@@ -42,7 +42,6 @@ function switchScreen(screenId) {
   document.querySelectorAll('.screen').forEach(s => {
     s.classList.remove('active');
   });
-  
   // Apply active class to requested screen
   const target = document.getElementById(screenId);
   if(target) target.classList.add('active');
@@ -111,7 +110,7 @@ window.editQuestion = function(index) {
   document.getElementById('opt-1').value = q.options[1];
   document.getElementById('opt-2').value = q.options[2];
   document.getElementById('opt-3').value = q.options[3];
-  document.getElementById('correct-opt').value = q.answer;
+  document.getElementById('correct-opt').value = parseInt(q.answer);
   
   document.getElementById('form-title').textContent = `Edit Question ${index + 1}`;
   document.getElementById('save-btn').textContent = "Update Question";
@@ -306,10 +305,22 @@ function loadQuestion() {
 }
 
 function selectOption(selectedIdx) {
-  if (selectedIdx === questions[currentQuestionIndex].answer) score += 100;
+  const currentQuestion = questions[currentQuestionIndex];
+  
+  // FIX: Explicitly parse both to numbers to guarantee strict equality check
+  const selected = parseInt(selectedIdx, 10);
+  const correct = parseInt(currentQuestion.answer, 10);
+
+  if (selected === correct) {
+    score += 100;
+  }
+  
   currentQuestionIndex++;
-  if (currentQuestionIndex < questions.length) loadQuestion();
-  else finishGame();
+  if (currentQuestionIndex < questions.length) {
+    loadQuestion();
+  } else {
+    finishGame();
+  }
 }
 
 async function finishGame() {
