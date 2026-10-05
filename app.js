@@ -1,11 +1,11 @@
 // --- FIREBASE CONFIG ---
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAOqC13bplLUJ_8uv09DO6PneaZOoGF-mc",
+  authDomain: "trivia-e6cd8.firebaseapp.com",
+  projectId: "trivia-e6cd8",
+  storageBucket: "trivia-e6cd8.firebasestorage.app",
+  messagingSenderId: "96735171511",
+  appId: "1:96735171511:web:1f4675fd31f584bda24e32"
 };
 
 let auth, db;
