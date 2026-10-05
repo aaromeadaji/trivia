@@ -9,11 +9,14 @@ const firebaseConfig = {
 };
 
 let db;
+let adminUnsubscribe = null;
+let leaderboardUnsubscribe = null;
+
 if(firebaseConfig.apiKey !== "YOUR_API_KEY") {
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
     
-    // Automatically start listening for real-time leaderboard updates
+    // Auto-start the live front-facing leaderboard
     initRealtimeLeaderboard();
 }
 
@@ -35,15 +38,14 @@ function saveQuestions() {
 }
 
 function switchScreen(screenId) {
-  // Hide all screens via CSS display property to enforce layout fixes
+  // Strip active class from all screens securely
   document.querySelectorAll('.screen').forEach(s => {
     s.classList.remove('active');
-    s.style.display = 'none';
   });
   
+  // Apply active class to requested screen
   const target = document.getElementById(screenId);
-  target.classList.add('active');
-  target.style.display = 'block';
+  if(target) target.classList.add('active');
 }
 
 // --- ADMIN PANEL FUNCTIONS ---
@@ -52,7 +54,7 @@ window.openAdmin = function() {
   if (pwd === "322abj12254") {
     switchScreen('screen-admin');
     renderAdminList();
-    if(db) fetchAdminResults(); // Load real-time results table for admin
+    if(db) fetchAdminResults(); // Trigger live admin updates
   } else if (pwd !== null) {
     alert("Incorrect password. Access denied.");
   }
@@ -167,54 +169,84 @@ window.resetDefaults = function() {
   }
 }
 
-// --- FULL REALTIME RESULTS & WIPING (Admin Only) ---
-let adminUnsubscribe = null;
 
+// --- REALTIME LIVE RESULTS (Admin & Front-End) ---
+
+// 1. Live Admin Panel
 function fetchAdminResults() {
   const tbody = document.getElementById('admin-results-body');
   if(!tbody) return;
   tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading live results...</td></tr>';
   
-  if (adminUnsubscribe) adminUnsubscribe(); // Stop any previous listeners
+  if (adminUnsubscribe) adminUnsubscribe(); // Stop prior listeners
   
-  try {
-    adminUnsubscribe = db.collection('scores').onSnapshot((snapshot) => {
-      let results = [];
-      snapshot.forEach(doc => results.push({ id: doc.id, ...doc.data() }));
+  adminUnsubscribe = db.collection('scores').onSnapshot((snapshot) => {
+    let results = [];
+    snapshot.forEach(doc => results.push({ id: doc.id, ...doc.data() }));
 
-      results.sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        const tA = (a.timestamp && typeof a.timestamp.toMillis === 'function') ? a.timestamp.toMillis() : Date.now();
-        const tB = (b.timestamp && typeof b.timestamp.toMillis === 'function') ? b.timestamp.toMillis() : Date.now();
-        return tA - tB; 
-      });
+    results.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      const tA = (a.timestamp && typeof a.timestamp.toMillis === 'function') ? a.timestamp.toMillis() : Date.now();
+      const tB = (b.timestamp && typeof b.timestamp.toMillis === 'function') ? b.timestamp.toMillis() : Date.now();
+      return tA - tB; 
+    });
 
-      tbody.innerHTML = '';
+    tbody.innerHTML = '';
+    if(results.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No submissions yet.</td></tr>';
+        return;
+    }
+
+    results.forEach((data, index) => {
+      const rank = index + 1;
+      const dateObj = (data.timestamp && typeof data.timestamp.toDate === 'function') ? data.timestamp.toDate() : new Date();
+      const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const dateString = dateObj.toLocaleDateString();
+
+      tbody.innerHTML += `<tr>
+        <td><strong>#${rank}</strong></td>
+        <td>${data.name}<br><small style="color:var(--text-muted);">${data.email}</small></td>
+        <td>${data.score}</td>
+        <td>${timeString}<br><small style="color:var(--text-muted);">${dateString}</small></td>
+      </tr>`;
+    });
+  }, (err) => {
+    console.error("Live Fetch Error:", err);
+    tbody.innerHTML = `<tr><td colspan="4" style="color: red;">Error: ${err.message}</td></tr>`;
+  });
+}
+
+// 2. Live Front-facing Leaderboard
+function initRealtimeLeaderboard() {
+  if (leaderboardUnsubscribe) leaderboardUnsubscribe();
+  
+  leaderboardUnsubscribe = db.collection('scores').onSnapshot((snapshot) => {
+    let results = [];
+    snapshot.forEach(doc => results.push(doc.data()));
+
+    results.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      const tA = (a.timestamp && typeof a.timestamp.toMillis === 'function') ? a.timestamp.toMillis() : Date.now();
+      const tB = (b.timestamp && typeof b.timestamp.toMillis === 'function') ? b.timestamp.toMillis() : Date.now();
+      return tA - tB;
+    });
+
+    const body = document.getElementById('leaderboard-body');
+    if(body) {
+      body.innerHTML = '';
       if(results.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No submissions yet.</td></tr>';
+          body.innerHTML = '<tr><td colspan="3" style="text-align:center;">Waiting for players...</td></tr>';
           return;
       }
-
-      results.forEach((data, index) => {
+      
+      results.slice(0, 5).forEach((data, index) => {
         const rank = index + 1;
-        const dateObj = (data.timestamp && typeof data.timestamp.toDate === 'function') ? data.timestamp.toDate() : new Date();
-        const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        const dateString = dateObj.toLocaleDateString();
-
-        tbody.innerHTML += `<tr>
-          <td><strong>#${rank}</strong></td>
-          <td>${data.name}<br><small style="color:var(--text-muted);">${data.email}</small></td>
-          <td>${data.score}</td>
-          <td>${timeString}<br><small style="color:var(--text-muted);">${dateString}</small></td>
-        </tr>`;
+        body.innerHTML += `<tr><td>#${rank} ${rank<=3?'🏆':''}</td><td>${data.name}</td><td>${data.score}</td></tr>`;
       });
-    }, (err) => {
-      console.error("Live Fetch Error:", err);
-      tbody.innerHTML = `<tr><td colspan="4" style="color: red;">Error: ${err.message}</td></tr>`;
-    });
-  } catch(err) {
-    console.error("Initialization Error:", err);
-  }
+    }
+  }, (err) => {
+     console.error("Live Leaderboard Error:", err);
+  });
 }
 
 window.wipeResults = async function() {
@@ -232,7 +264,6 @@ window.wipeResults = async function() {
     });
     await batch.commit();
     alert("All results have been wiped successfully.");
-    // No need to fetchAdminResults() because onSnapshot triggers automatically
   } catch (err) {
     console.error("Error wiping results:", err);
     alert("Error wiping results. " + err.message);
@@ -295,30 +326,4 @@ async function finishGame() {
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
   } catch (err) { console.error("Score save error", err); }
-}
-
-// Front-facing Realtime leaderboard (Top 5 only)
-function initRealtimeLeaderboard() {
-  db.collection('scores').onSnapshot((snapshot) => {
-    let results = [];
-    snapshot.forEach(doc => results.push(doc.data()));
-
-    results.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      const tA = (a.timestamp && typeof a.timestamp.toMillis === 'function') ? a.timestamp.toMillis() : Date.now();
-      const tB = (b.timestamp && typeof b.timestamp.toMillis === 'function') ? b.timestamp.toMillis() : Date.now();
-      return tA - tB;
-    });
-
-    const body = document.getElementById('leaderboard-body');
-    if(body) {
-      body.innerHTML = '';
-      results.slice(0, 5).forEach((data, index) => {
-        const rank = index + 1;
-        body.innerHTML += `<tr><td>#${rank} ${rank<=3?'🏆':''}</td><td>${data.name}</td><td>${data.score}</td></tr>`;
-      });
-    }
-  }, (err) => {
-     console.error("Live Leaderboard Error:", err);
-  });
 }
