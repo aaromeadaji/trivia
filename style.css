@@ -24,6 +24,10 @@ p.subtitle { text-align: center; color: var(--text-muted); margin-bottom: 24px; 
 .btn-danger { background-color: var(--danger); margin-top: 10px; }
 .btn-danger:hover { background-color: #dc2626; }
 
+/* The logic that hides inactive screens */
+.screen { display: none; }
+.screen.active { display: block; }
+
 /* Login Form */
 .login-form { display: grid; gap: 12px; margin-bottom: 20px; }
 .login-form input { padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; width: 100%; }
