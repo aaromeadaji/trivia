@@ -1,18 +1,21 @@
 # CJID October General Meeting Quiz 🚂
 
-A fast-paced, interactive trivia game built for the CJID October General Meeting. Features a live leaderboard, email-agnostic entry, and a password-protected admin panel to manage questions.
+A fast-paced, interactive trivia game built for the CJID October General Meeting. Features a live leaderboard, email-agnostic entry, and a password-protected admin panel.
 
 ## Features
-- **Open Entry System:** Players simply enter their Name and Email to play. No strict passwords or Google/SSO required.
+- **Open Entry System:** Players simply enter their Name and Email to play. 
 - **Global Leaderboard:** Real-time top 5 score tracking using Firestore.
-- **Secured Admin Panel:** Add, delete, edit, or reset custom questions directly from the UI (Password protected).
+- **Advanced Admin Panel:**
+  - Add, delete, edit, reorder, or reset custom questions.
+  - **Full Rankings Dashboard:** View a complete, ranked list of every participant (1st through Last), displaying their exact submission time down to the second.
+  - **Data Wipe:** Clear out all test or past event results from the database with a click (Password protected).
 - **Vanilla Tech Stack:** Zero dependencies, lightweight HTML/CSS/JS.
 
 ## Setup Instructions
 
 1. **Firebase Configuration**
    - Create a project on [Firebase Console](https://console.firebase.google.com).
-   - Enable **Firestore Database** (start in Test Mode to allow open writes from the game).
+   - Enable **Firestore Database** (start in Test Mode).
    - Copy your Web App config keys.
    
 2. **Local Environment**
