@@ -5,7 +5,7 @@ A fast-paced, interactive trivia game built for the CJID October General Meeting
 ## Features
 - **Open Entry System:** Players simply enter their Name and Email to play. No strict passwords or Google/SSO required.
 - **Global Leaderboard:** Real-time top 5 score tracking using Firestore.
-- **Secured Admin Panel:** Add, delete, or reset custom questions directly from the UI (Password protected).
+- **Secured Admin Panel:** Add, delete, edit, or reset custom questions directly from the UI (Password protected).
 - **Vanilla Tech Stack:** Zero dependencies, lightweight HTML/CSS/JS.
 
 ## Setup Instructions
