@@ -1,13 +1,3 @@
-// --- FIREBASE CONFIG ---
-const firebaseConfig = {
-  apiKey: "AIzaSyAOqC13bplLUJ_8uv09DO6PneaZOoGF-mc",
-  authDomain: "trivia-e6cd8.firebaseapp.com",
-  projectId: "trivia-e6cd8",
-  storageBucket: "trivia-e6cd8.firebasestorage.app",
-  messagingSenderId: "96735171511",
-  appId: "1:96735171511:web:1f4675fd31f584bda24e32"
-};
-
 let db;
 let adminUnsubscribe = null;
 let leaderboardUnsubscribe = null;
@@ -26,14 +16,33 @@ const defaultQuestions = [
   { question: "Which of these is NOT a core program area of CJID?", options: ["Media Development", "Agricultural Policy", "Accountability", "Elections"], answer: 1 }
 ];
 
-let questions = JSON.parse(localStorage.getItem('trivia_questions')) || defaultQuestions;
+// Helper to safely load questions without crashing on corrupted localStorage
+function loadQuestionsFromStorage() {
+  try {
+    const stored = localStorage.getItem('trivia_questions');
+    if (!stored) return [...defaultQuestions];
+    const parsed = JSON.parse(stored);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed;
+    }
+  } catch (e) {
+    console.error("Error reading questions from localStorage:", e);
+  }
+  return [...defaultQuestions];
+}
+
+let questions = loadQuestionsFromStorage();
 let currentQuestionIndex = 0;
 let score = 0;
 let currentUser = null;
 let editingIndex = -1;
 
 function saveQuestions() {
-  localStorage.setItem('trivia_questions', JSON.stringify(questions));
+  try {
+    localStorage.setItem('trivia_questions', JSON.stringify(questions));
+  } catch (e) {
+    console.error("Error saving questions to localStorage:", e);
+  }
   renderAdminList();
 }
 
@@ -51,7 +60,7 @@ window.openAdmin = function() {
   if (pwd === "322abj12254") {
     switchScreen('screen-admin');
     renderAdminList();
-    if(db) fetchAdminResults(); // Trigger live admin updates
+    if(db) fetchAdminResults();
   } else if (pwd !== null) {
     alert("Incorrect password. Access denied.");
   }
@@ -59,7 +68,14 @@ window.openAdmin = function() {
 
 function renderAdminList() {
   const list = document.getElementById('admin-question-list');
+  if (!list) return;
   list.innerHTML = '';
+  
+  if (!questions || questions.length === 0) {
+    list.innerHTML = '<div style="padding: 12px; text-align: center; color: #64748b;">No questions available. Add a question above!</div>';
+    return;
+  }
+
   questions.forEach((q, index) => {
     const item = document.createElement('div');
     item.className = 'q-list-item';
@@ -79,36 +95,50 @@ function renderAdminList() {
 }
 
 window.moveQuestionUp = function(index) {
-  if (index > 0) {
+  if (index > 0 && index < questions.length) {
     const temp = questions[index];
     questions[index] = questions[index - 1];
     questions[index - 1] = temp;
-    if (editingIndex === index) editingIndex = index - 1;
-    else if (editingIndex === index - 1) editingIndex = index;
+    
+    // Maintain correct editing reference
+    if (editingIndex === index) {
+      editingIndex = index - 1;
+    } else if (editingIndex === index - 1) {
+      editingIndex = index;
+    }
+    
     saveQuestions();
   }
 }
 
 window.moveQuestionDown = function(index) {
-  if (index < questions.length - 1) {
+  if (index >= 0 && index < questions.length - 1) {
     const temp = questions[index];
     questions[index] = questions[index + 1];
     questions[index + 1] = temp;
-    if (editingIndex === index) editingIndex = index + 1;
-    else if (editingIndex === index + 1) editingIndex = index;
+    
+    // Maintain correct editing reference
+    if (editingIndex === index) {
+      editingIndex = index + 1;
+    } else if (editingIndex === index + 1) {
+      editingIndex = index;
+    }
+    
     saveQuestions();
   }
 }
 
 window.editQuestion = function(index) {
+  if (index < 0 || index >= questions.length) return;
   editingIndex = index;
   const q = questions[index];
-  document.getElementById('new-q').value = q.question;
-  document.getElementById('opt-0').value = q.options[0];
-  document.getElementById('opt-1').value = q.options[1];
-  document.getElementById('opt-2').value = q.options[2];
-  document.getElementById('opt-3').value = q.options[3];
-  document.getElementById('correct-opt').value = parseInt(q.answer, 10);
+  
+  document.getElementById('new-q').value = q.question || '';
+  document.getElementById('opt-0').value = q.options && q.options[0] ? q.options[0] : '';
+  document.getElementById('opt-1').value = q.options && q.options[1] ? q.options[1] : '';
+  document.getElementById('opt-2').value = q.options && q.options[2] ? q.options[2] : '';
+  document.getElementById('opt-3').value = q.options && q.options[3] ? q.options[3] : '';
+  document.getElementById('correct-opt').value = parseInt(q.answer, 10) || 0;
   
   document.getElementById('form-title').textContent = `Edit Question ${index + 1}`;
   document.getElementById('save-btn').textContent = "Update Question";
@@ -130,22 +160,25 @@ window.cancelEdit = function() {
 }
 
 window.saveQuestionForm = function() {
-  const qText = document.getElementById('new-q').value;
+  const qText = document.getElementById('new-q').value.trim();
   const opts = [
-    document.getElementById('opt-0').value,
-    document.getElementById('opt-1').value,
-    document.getElementById('opt-2').value,
-    document.getElementById('opt-3').value
+    document.getElementById('opt-0').value.trim(),
+    document.getElementById('opt-1').value.trim(),
+    document.getElementById('opt-2').value.trim(),
+    document.getElementById('opt-3').value.trim()
   ];
   const ans = parseInt(document.getElementById('correct-opt').value, 10);
 
-  if (!qText || opts.includes('')) return alert('Please fill all fields');
+  if (!qText || opts.some(opt => opt === '')) {
+    return alert('Please fill in all fields (Question and 4 options)');
+  }
 
   if (editingIndex === -1) {
     questions.push({ question: qText, options: opts, answer: ans });
   } else {
     questions[editingIndex] = { question: qText, options: opts, answer: ans };
   }
+  
   saveQuestions();
   cancelEdit();
 }
@@ -153,8 +186,14 @@ window.saveQuestionForm = function() {
 window.deleteQuestion = function(index) {
   if (confirm("Are you sure you want to delete this question?")) {
     questions.splice(index, 1);
+    
+    if (editingIndex === index) {
+      cancelEdit();
+    } else if (editingIndex > index) {
+      editingIndex--;
+    }
+    
     saveQuestions();
-    if (editingIndex === index) cancelEdit();
   }
 }
 
@@ -169,22 +208,17 @@ window.resetDefaults = function() {
 
 // --- REALTIME LIVE RESULTS & RANKING LOGIC ---
 
-// Helper function to sort records by Score (Desc), then Timestamp (Ascending / Earliest submission first)
 function sortResultsByScoreAndTime(results) {
   return results.sort((a, b) => {
-    // Primary Sort: Highest Score first
     if (b.score !== a.score) {
       return b.score - a.score;
     }
-    
-    // Secondary Tie-breaker: Timestamp (earliest submission gets higher rank)
     const tA = (a.timestamp && typeof a.timestamp.toMillis === 'function') ? a.timestamp.toMillis() : (a.localTime || Date.now());
     const tB = (b.timestamp && typeof b.timestamp.toMillis === 'function') ? b.timestamp.toMillis() : (b.localTime || Date.now());
     return tA - tB; 
   });
 }
 
-// 1. Live Admin Panel - Displays ALL Participants
 function fetchAdminResults() {
   const tbody = document.getElementById('admin-results-body');
   const countSpan = document.getElementById('participant-count');
@@ -197,7 +231,6 @@ function fetchAdminResults() {
     let results = [];
     snapshot.forEach(doc => results.push({ id: doc.id, ...doc.data() }));
 
-    // Apply Score -> Timestamp sorting rule
     sortResultsByScoreAndTime(results);
 
     if(countSpan) countSpan.textContent = results.length;
@@ -233,7 +266,6 @@ function fetchAdminResults() {
   });
 }
 
-// 2. Live Player Leaderboard - Displays ALL Participants ranked 1st to last
 function initRealtimeLeaderboard() {
   if (leaderboardUnsubscribe) leaderboardUnsubscribe();
   
@@ -241,7 +273,6 @@ function initRealtimeLeaderboard() {
     let results = [];
     snapshot.forEach(doc => results.push(doc.data()));
 
-    // Apply Score -> Timestamp sorting rule
     sortResultsByScoreAndTime(results);
 
     const body = document.getElementById('leaderboard-body');
@@ -252,7 +283,6 @@ function initRealtimeLeaderboard() {
           return;
       }
       
-      // Render EVERY participant in the database (no limit)
       results.forEach((data, index) => {
         const rank = index + 1;
         body.innerHTML += `<tr><td>#${rank} ${rank <= 3 ? '🏆' : ''}</td><td>${data.name}</td><td>${data.score}</td></tr>`;
@@ -296,7 +326,8 @@ window.signIn = function(event) {
 }
 
 function startNewGame() {
-  if(questions.length === 0) return alert("No questions available! Add some in the Admin panel.");
+  questions = loadQuestionsFromStorage(); // Always pull latest saved questions on game start
+  if (!questions || questions.length === 0) return alert("No questions available! Add some in the Admin panel.");
   currentQuestionIndex = 0;
   score = 0;
   switchScreen('screen-game');
@@ -304,6 +335,11 @@ function startNewGame() {
 }
 
 function loadQuestion() {
+  if (!questions || currentQuestionIndex >= questions.length) {
+    finishGame();
+    return;
+  }
+
   const q = questions[currentQuestionIndex];
   document.getElementById('question-tracker').textContent = `Question ${currentQuestionIndex + 1}/${questions.length}`;
   document.getElementById('score-tracker').textContent = `Score: ${score}`;
@@ -312,22 +348,22 @@ function loadQuestion() {
   const container = document.getElementById('options-container');
   container.innerHTML = '';
 
-  q.options.forEach((opt, idx) => {
-    const btn = document.createElement('button');
-    btn.className = 'option-btn';
-    btn.textContent = opt;
-    btn.onclick = () => selectOption(idx);
-    container.appendChild(btn);
-  });
+  if (q.options && Array.isArray(q.options)) {
+    q.options.forEach((opt, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = opt;
+      btn.onclick = () => selectOption(idx);
+      container.appendChild(btn);
+    });
+  }
 }
 
 function selectOption(selectedIdx) {
   const currentQuestion = questions[currentQuestionIndex];
-  
   const selected = parseInt(selectedIdx, 10);
   const correct = parseInt(currentQuestion.answer, 10);
 
-  // Exact scoring check
   if (selected === correct) {
     score += 100;
   }
@@ -345,7 +381,6 @@ async function finishGame() {
   document.getElementById('final-score-text').textContent = `${currentUser.displayName}, your score is ${score}!`;
 
   try {
-    // Record every single participant submission with Firestore server timestamp AND local epoch time fallback
     await db.collection('scores').add({
       name: currentUser.displayName,
       email: currentUser.email,
